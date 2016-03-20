@@ -7,32 +7,41 @@ import (
 // Dispatcher is the main code that runs and starts workers. Dispatcher is
 // resposible of managing workers, dispatching them when needed
 type Dispatcher struct {
-	maxWorkers int
-	wg         *sync.WaitGroup
-	wait       bool
-	JobQueue   chan Job
-	workerPool chan chan Job
-	workers    []Worker
-	quit       chan bool
+	maxWorkers      int
+	queueBufferSize int
+	wg              *sync.WaitGroup
+	wait            bool
+	JobQueue        chan Job
+	workerPool      chan chan Job
+	workers         []Worker
+	quit            chan bool
 }
 
 // NewDispatcher Creates a new dispatcher instance with given maximum number of
 // workers
-func NewDispatcher(maxWorkers int) *Dispatcher {
-	return &Dispatcher{
-		maxWorkers: maxWorkers,
-		workerPool: make(chan chan Job, maxWorkers),
-		JobQueue:   make(chan Job),
-		wait:       false,
-		quit:       make(chan bool),
-		workers:    make([]Worker, maxWorkers),
+func NewDispatcher(maxWorkers int, queueBufferSize int) *Dispatcher {
+	d := &Dispatcher{
+		maxWorkers:      maxWorkers,
+		queueBufferSize: queueBufferSize,
+		workerPool:      make(chan chan Job, maxWorkers),
+		wait:            false,
+		quit:            make(chan bool),
+		workers:         make([]Worker, maxWorkers),
 	}
+
+	if queueBufferSize != 0 {
+		d.JobQueue = make(chan Job, queueBufferSize)
+	} else {
+		d.JobQueue = make(chan Job)
+	}
+
+	return d
 }
 
 // NewDispatcherWG Creates a new Dispatcher instance with given maximum number of
 // workers and uses the given wait group to wait for workers to finish their jobs
-func NewDispatcherWG(maxWorkers int, exWg *sync.WaitGroup) *Dispatcher {
-	d := NewDispatcher(maxWorkers)
+func NewDispatcherWG(maxWorkers int, queueBufferSize int, exWg *sync.WaitGroup) *Dispatcher {
+	d := NewDispatcher(maxWorkers, queueBufferSize)
 	d.wg = exWg
 	d.wait = true
 
