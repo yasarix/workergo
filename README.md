@@ -2,7 +2,7 @@
 
 WorkerGo is a worker pool implementation that can be used in any Go program to handle tasks with workers. Workers created by WorkerGo calls the method of the structs sent them as a job. So, any struct with a method needs to be called in parallel can be sent to WorkerGo's job queue.
 
-WorkerGo is heavily influenced the Marico Catilho's post here: [http://marcio.io/2015/07/handling-1-million-requests-per-minute-with-golang/](http://http://marcio.io/2015/07/handling-1-million-requests-per-minute-with-golang/)
+WorkerGo is heavily influenced by the Marico Catilho's post here: [http://marcio.io/2015/07/handling-1-million-requests-per-minute-with-golang/](http://http://marcio.io/2015/07/handling-1-million-requests-per-minute-with-golang/)
 
 I was trying to write a worker pool implementation that I could use in a program with different portions of it will require parallel processing. I found his post while researching, modified the samples he provided and turned it into a package so it could be reused anyone.
 
