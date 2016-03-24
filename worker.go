@@ -26,7 +26,7 @@ func NewWorker(workerPool chan chan Job) Worker {
 	}
 }
 
-// NewWorker Creates a new Worker instance with pointer to a sync.WaitGroup
+// NewWorkerWG Creates a new Worker instance with pointer to a sync.WaitGroup
 // instance to handle wait groups
 func NewWorkerWG(workerPool chan chan Job, wg *sync.WaitGroup) Worker {
 	w := NewWorker(workerPool)
@@ -52,7 +52,9 @@ func (w *Worker) Run() {
 				}
 
 				w.idle = true
-				w.wg.Done()
+				if w.wait {
+					w.wg.Done()
+				}
 			case <-w.quit:
 				return
 			}

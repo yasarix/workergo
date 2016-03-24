@@ -85,7 +85,9 @@ func (d *Dispatcher) dispatch() {
 
 // SubmitJob Submits given Job into job queue
 func (d *Dispatcher) SubmitJob(job Job) {
-	d.wg.Add(1)
+	if d.wait {
+		d.wg.Add(1)
+	}
 
 	// Send to job queue
 	d.JobQueue <- job
@@ -104,4 +106,7 @@ func (d *Dispatcher) shutdown() {
 
 		}
 	}
+
+	close(d.workerPool)
+	close(d.JobQueue)
 }
