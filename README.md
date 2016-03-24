@@ -59,3 +59,6 @@ d := NewDispatcherWG(maxWorkers, queueBufferSize, &wg)
 ```
 
 Whenever a new job has been submitted into the job queue, dispatcher will call `wg.Add(1)`, and once a worker finished that job, it will call `wg.Done()`.
+
+# More Documentation
+[https://godoc.org/github.com/yasarix/workergo](https://godoc.org/github.com/yasarix/workergo)
