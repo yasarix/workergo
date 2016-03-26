@@ -108,3 +108,8 @@ func (d *Dispatcher) shutdown() {
 	close(d.workerPool)
 	close(d.JobQueue)
 }
+
+// GetQueueSize returns current size of the job queue
+func (d *Dispatcher) GetQueueSize() int {
+	return len(d.JobQueue)
+}
