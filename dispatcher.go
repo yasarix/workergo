@@ -70,13 +70,11 @@ func (d *Dispatcher) dispatch() {
 	for {
 		select {
 		case job := <-d.JobQueue:
-			go func(job Job) {
-				// Get available workers channel
-				workerJobChannel := <-d.workerPool
+			// Get available workers channel
+			workerJobChannel := <-d.workerPool
 
-				// Send job to that channel
-				workerJobChannel <- job
-			}(job)
+			// Send job to that channel
+			workerJobChannel <- job
 		case <-d.quit:
 			return
 		}
