@@ -2,6 +2,7 @@ package workergo
 
 import (
 	"sync"
+	"time"
 )
 
 // Dispatcher is the main code that runs and starts workers. Dispatcher is
@@ -15,6 +16,7 @@ type Dispatcher struct {
 	workerPool      chan chan Job
 	workers         []Worker
 	quit            chan bool
+	limiter         <-chan time.Time
 }
 
 // NewDispatcher Creates a new dispatcher instance with given maximum number of
@@ -64,6 +66,12 @@ func (d *Dispatcher) Run() {
 	go d.dispatch()
 }
 
+// RunWithLimiter Adds delays between jobs
+func (d *Dispatcher) RunWithLimiter(limiterGap time.Duration) {
+	d.limiter = time.Tick(limiterGap)
+	d.Run()
+}
+
 func (d *Dispatcher) dispatch() {
 	defer d.shutdown()
 
@@ -72,6 +80,10 @@ func (d *Dispatcher) dispatch() {
 		case job := <-d.JobQueue:
 			// Get available workers channel
 			workerJobChannel := <-d.workerPool
+
+			if d.limiter != nil {
+				<-d.limiter
+			}
 
 			// Send job to that channel
 			workerJobChannel <- job
