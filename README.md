@@ -63,5 +63,16 @@ d := NewDispatcherWG(maxWorkers, queueBufferSize, &wg)
 
 Whenever a new job has been submitted into the job queue, dispatcher will call `wg.Add(1)`, and once a worker finished that job, it will call `wg.Done()`.
 
+# Setting a rate limiter
+
+You can also run the dispatcher with a rate limiter value. Simply, call `Dispatcher.RunWithLimiter()` method and pass a desired `time.Duration` value instead of calling `Dispatcher.Run()`
+
+Let's say, you want each job to be executed with 0.5 seconds delays:
+```
+d.RunWithLimiter(time.Millisecond * time.Duration(500))
+```
+
+Now, each job that you have submitted will be dispatched with 0.5 seconds delay.
+
 # More Documentation
 [https://godoc.org/github.com/yasarix/workergo](https://godoc.org/github.com/yasarix/workergo)
