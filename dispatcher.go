@@ -105,9 +105,7 @@ func (d *Dispatcher) SubmitJob(job Job) {
 
 // Stop Stops dispatcher
 func (d *Dispatcher) Stop() {
-	go func() {
-		d.quit <- true
-	}()
+	d.quit <- true
 }
 
 func (d *Dispatcher) shutdown() {

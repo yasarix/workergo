@@ -65,10 +65,7 @@ func (w *Worker) Run() {
 // Stop Stops worker instance if it is idle
 func (w *Worker) Stop() bool {
 	if w.idle {
-		go func() {
-			w.quit <- true
-		}()
-
+		w.quit <- true
 		return true
 	}
 
