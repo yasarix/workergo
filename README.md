@@ -13,7 +13,7 @@ I was trying to write a worker pool implementation that I could use in a program
 # Installation
 
 ```
-go get github.com/yasarix/workergo
+go get gopkg.in/yasarix/workergo.v1
 ```
 
 # Usage
