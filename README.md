@@ -4,76 +4,70 @@
 [![Godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/yasarix/workergo)
 [![Go Report Card](https://goreportcard.com/badge/github.com/yasarix/workergo)](https://goreportcard.com/report/github.com/yasarix/workergo)
 
-WorkerGo is a worker pool implementation that can be used in any Go program to handle tasks with workers. Workers created by WorkerGo calls the method of the structs sent them as a job. So, any struct with a method needs to be called in parallel can be sent to WorkerGo's job queue.
+WorkerGo is an MIT licensed worker pool implementation that can be used in any Go program to handle tasks with workers.
 
 WorkerGo is heavily influenced by the Marcio Catilho's post here: [http://marcio.io/2015/07/handling-1-million-requests-per-minute-with-golang/](http://marcio.io/2015/07/handling-1-million-requests-per-minute-with-golang/)
 
 I was trying to write a worker pool implementation that I could use in a program with different portions of it will require parallel processing. I found his post while researching, created a new package using portions of his samples in my project. Since the package I created can be used for calling any struct with a method, I thought it would be good to share, so, it can be used in any program that needs a worker pool implementation.
 
-# Installation
+## Installation
 
-```
-go get gopkg.in/yasarix/workergo.v1
-```
+    go get gopkg.in/yasarix/workergo.v2
 
-# Usage
+## Usage
 
 First, a `Dispatcher` needs to be created.
 
-```
-maxWorkers := 5 // Maximum number of workers
-queueBufferSize := 20 // Buffer size for job queue
-d := workergo.Dispatcher(maxWorkers, queueBufferSize)
-d.Run()
-```
+    maxWorkers := 5 // Maximum number of workers
+    queueBufferSize := 200 // Buffer size for job queue
+    d := workergo.New(maxWorkers, queueBufferSize)
 
-Then, a job can be created and sent to job queue:
+    // Start dispatcher
+    d.Start()
 
-```
-work := NewLengthyWork(123, "Hello")
-job := workergo.NewJob(workergo.TASK, work, "DoLengthyWork")
-d.SubmitJob(job)
-```
+Workergo accepts any struct that implements `Job` interface that you can see below:
 
-The work here should be a struct with `DoLengthyWork()` method:
+    type Job interface {
+        Run()
+    }
 
-```
-type LengthyWork struct {
-	number int
-	message string
-}
+Then, a struct that satisfies `Job` interface can be created and sent to job queue:
 
-func NewLengthyWork(number int, message string) *LengthyWork {
-	return &LengthyWork{
-		number: number,
-		message: message,
-	}
-}
+    type MyJob struct {
+        id int
+    }
 
-func (w *LengthyWork) DoLengthyWork() {
-	fmt.Println("Doing some lengthy work for", w.number, " - message:", w.message)
-}
-```
+    func (j *MyJob) Run() {
+        fmt.Printf("This is job id: %d", id)
+        time.Sleep(5 * time.Second)
+    }
 
-You can also pass the pointer of your existing `sync.waitGroup` into dispatcher to wait for workers to finish the jobs. Instead of calling `NewDispatcher()`, call `NewDispatcherWG()`:
+    ...
+    ...
+    func main() {
+        d := workergo.New(5, 100)
+        d.Start()
+        for i := 0; i < 13; i++ {
+            j := MyJob{id: i}
+            d.Submit(&j)
+        }
 
-```
-var wg sync.WorkGroup
-d := NewDispatcherWG(maxWorkers, queueBufferSize, &wg)
-```
+        // Wait for workers to finish executing `j.Run()` methods
+        d.Wait()
+    }
 
-Whenever a new job has been submitted into the job queue, dispatcher will call `wg.Add(1)`, and once a worker finished that job, it will call `wg.Done()`.
+## Setting a rate limiter
 
-# Setting a rate limiter
+You can also run the dispatcher with a rate limiter value. Simply, pass a `time.Duration` while creating the dispatcher:
 
-You can also run the dispatcher with a rate limiter value. Simply, call `Dispatcher.RunWithLimiter()` method and pass a desired `time.Duration` value instead of calling `Dispatcher.Run()`
-
-Let's say, you want each job to be executed with 0.5 seconds delays:
-```
-d.RunWithLimiter(time.Millisecond * time.Duration(500))
-```
+    d := workergo.New(5, 100, workergo.RateLimit(time.Millisecond * 500))
 
 Now, each job that you have submitted will be dispatched with 0.5 seconds delay.
 
-# More Documentation
+## Stopping the dispatcher
+
+Dispatcher can be stopped gracefully by calling `Stop()` method of `Dispatcher`. Dispatcher will wait until the actively running jobs to finish, and then stop dispatching rest of the jobs in the queue, and will shut down the workers.
+
+## Code Documentation
+
 [https://godoc.org/github.com/yasarix/workergo](https://godoc.org/github.com/yasarix/workergo)
