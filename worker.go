@@ -1,60 +1,44 @@
 package workergo
 
 import (
-	"reflect"
 	"sync"
 )
 
-// Worker Structure of worker
-type Worker struct {
-	WorkerPool chan chan Job
-	JobChannel chan Job
-	wait       bool
-	wg         *sync.WaitGroup
+// worker Structure of worker
+type worker struct {
+	workerPool chan chan Job
+	jobChan    chan Job
+	jobWG      *sync.WaitGroup
+	workerWG   *sync.WaitGroup
 	quit       chan bool
 	idle       bool
 }
 
-// NewWorker Creates a new Worker instance
-func NewWorker(workerPool chan chan Job) Worker {
-	return Worker{
-		WorkerPool: workerPool,
-		JobChannel: make(chan Job),
-		wait:       false,
+// newWorker Creates a new Worker instance
+func newWorker(workerPool chan chan Job, jobWG, workerWG *sync.WaitGroup) *worker {
+	return &worker{
+		workerPool: workerPool,
+		jobChan:    make(chan Job),
 		quit:       make(chan bool),
 		idle:       true,
+		jobWG:      jobWG,
+		workerWG:   workerWG,
 	}
 }
 
-// NewWorkerWG Creates a new Worker instance with pointer to a sync.WaitGroup
-// instance to handle wait groups
-func NewWorkerWG(workerPool chan chan Job, wg *sync.WaitGroup) Worker {
-	w := NewWorker(workerPool)
-	w.wait = true
-	w.wg = wg
-
-	return w
-}
-
-// Run Starts worker
-func (w *Worker) Run() {
+// start Starts worker
+func (w *worker) start() {
 	go func() {
+		defer w.workerWG.Done()
 		for {
-			w.WorkerPool <- w.JobChannel
+			w.workerPool <- w.jobChan
 
 			select {
-			case job := <-w.JobChannel:
+			case job := <-w.jobChan:
 				w.idle = false
-
-				// call target method
-				if job.Type == TASK {
-					reflect.ValueOf(*job.Payload).MethodByName(job.TargetFunc).Call([]reflect.Value{})
-				}
-
+				job.Run()
 				w.idle = true
-				if w.wait {
-					w.wg.Done()
-				}
+				w.jobWG.Done()
 			case <-w.quit:
 				return
 			}
@@ -62,8 +46,8 @@ func (w *Worker) Run() {
 	}()
 }
 
-// Stop Stops worker instance if it is idle
-func (w *Worker) Stop() bool {
+// stop Stops worker instance if it is idle
+func (w *worker) stop() bool {
 	if w.idle {
 		w.quit <- true
 		return true
