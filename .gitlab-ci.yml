@@ -1,7 +1,6 @@
 before_script:
   - export GOPATH=$(pwd)/__go
   - mkdir -p "$GOPATH"
-  - go get "github.com/pborman/uuid"
 
 compile:
   stage: build
